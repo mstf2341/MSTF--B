@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSTF BUZZER - الإصدار النهائي</title>
+    <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-database-compat.js"></script>
+    <style>
+        :root { --primary: #2563eb; --bg: #0f172a; --text: #f8fafc; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); text-align: center; padding: 20px; margin: 0; }
+        .header { color: var(--primary); font-size: 2.5rem; margin-top: 20px; font-weight: bold; }
+        .buzzer { width: 180px; height: 180px; background: #ef4444; border-radius: 50%; border: 8px solid #991b1b; color: white; font-size: 1.5rem; font-weight: bold; cursor: pointer; box-shadow: 0 10px 0 #7f1d1d; transition: 0.1s; margin: 30px auto; display: block; }
+        .buzzer:active { transform: translateY(5px); box-shadow: 0 4px 0 #7f1d1d; }
+        .winner-box { font-size: 1.8rem; color: #22c55e; margin: 20px; font-weight: bold; background: #1e293b; padding: 20px; border-radius: 15px; }
+        .hidden { display: none; }
+        input { padding: 12px; border-radius: 10px; border: none; width: 80%; max-width: 300px; margin-bottom: 15px; text-align: center; }
+        .btn { padding: 12px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; margin: 10px; width: 200px; }
+        .btn-player { background: #22c55e; color: white; }
+        .btn-host { background: var(--primary); color: white; }
+        .btn-reset { background: #ef4444; color: white; width: 90%; font-size: 1.2rem; }
+    </style>
+</head>
+<body>
+
+    <div class="header">MSTF BUZZER</div>
+
+    <div id="roleSelection">
+        <p style="margin: 25px 0;">اختر دورك في اللعبة:</p>
+        <button class="btn btn-player" onclick="startPlayer()">أنا لاعب (Player)</button>
+        <br>
+        <button class="btn btn-host" onclick="startHost()">أنا المسؤول (Host)</button>
+    </div>
+
+    <div id="playerUI" class="hidden">
+        <input type="text" id="pName" placeholder="ادخل اسمك">
+        <button class="buzzer" onclick="press()">اضغط!</button>
+        <div id="playerStatus">استعد..</div>
+    </div>
+
+    <div id="hostUI" class="hidden">
+        <div class="winner-box">
+            <p style="font-size: 0.9rem; color: #94a3b8;">أول ضغطة من:</p>
+            <div id="hostWinner">في انتظار اللاعبين</div>
+        </div>
+        <button class="btn btn-reset" onclick="reset()">تصفير البازر</button>
+    </div>
+
+<script>
+    // الإعدادات مدمجة بشكل مباشر لضمان الربط
+    const firebaseConfig = {
+      apiKey: "AIzaSyAEmoZ9PzSfTJzWbPn_yRxDnKxHR-z4Y4A",
+      authDomain: "mstf-b.firebaseapp.com",
+      databaseURL: "https://mstf-b-default-rtdb.firebaseio.com/", // تم التأكد من الرابط هنا
+      projectId: "mstf-b",
+      storageBucket: "mstf-b.firebasestorage.app",
+      messagingSenderId: "837143491416",
+      appId: "1:837143491416:web:66ccc638657d9bcfcc6b2d"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function startPlayer() {
+        document.getElementById('roleSelection').style.display = 'none';
+        document.getElementById('playerUI').classList.remove('hidden');
+    }
+
+    function startHost() {
+        const pass = prompt("رمز المسؤول:");
+        if(pass === "123") {
+            document.getElementById('roleSelection').style.display = 'none';
+            document.getElementById('hostUI').classList.remove('hidden');
+        } else {
+            alert("خطأ!");
+        }
+    }
+
+    function press() {
+        const name = document.getElementById('pName').value;
+        if(!name) return alert("اكتب اسمك!");
+        db.ref('winner').transaction(c => c === null ? name : c);
+    }
+
+    function reset() {
+        db.ref('winner').set(null);
+    }
+
+    db.ref('winner').on('value', (s) => {
+        const winner = s.val();
+        document.getElementById('hostWinner').innerText = winner ? winner : "في انتظار المتسابقين";
+        const status = document.getElementById('playerStatus');
+        if(winner) {
+            status.innerText = "الفائز: " + winner;
+            status.style.color = "#22c55e";
+            new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3').play();
+        } else {
+            status.innerText = "البازر جاهز!";
+            status.style.color = "#94a3b8";
+        }
+    });
+</script>
+</body>
+</html>
